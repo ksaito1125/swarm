@@ -1,0 +1,50 @@
+version: '3'
+ 
+services:
+  concourse-db:
+    image: postgres:9.6
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+    environment:
+      POSTGRES_DB: concourse
+      POSTGRES_USER: concourse
+      POSTGRES_PASSWORD: changeme
+      PGDATA: /database
+ 
+  concourse-web:
+    image: ksaito1125/concourse
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+    links: [concourse-db]
+    depends_on: [concourse-db]
+    command: web
+    restart: unless-stopped
+    ports: ["80:8080"]
+    environment:
+      CONCOURSE_EXTERNAL_URL: "${CONCOURSE_EXTERNAL_URL}"
+      CONCOURSE_BASIC_AUTH_USERNAME: concourse
+      CONCOURSE_BASIC_AUTH_PASSWORD: changeme
+      CONCOURSE_POSTGRES_HOST: concourse-db
+      CONCOURSE_POSTGRES_USER: concourse
+      CONCOURSE_POSTGRES_DATABASE: concourse
+      CONCOURSE_POSTGRES_PASSWORD: changeme
+ 
+  concourse-worker:
+    image: ksaito1125/concourse
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+    privileged: true
+    links: [concourse-web]
+    depends_on: [concourse-web]
+    command: worker
+    environment:
+      CONCOURSE_TSA_HOST: concourse-web
