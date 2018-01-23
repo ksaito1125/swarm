@@ -45,6 +45,9 @@ ps:
 node-ls:
 	@$(SWARM) node ls
 
+stack-ls:
+	@$(SWARM) stack ls
+
 service-ls:
 	@$(SWARM) service ls
 
